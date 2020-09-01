@@ -66,10 +66,35 @@ class match(object):
             [x['name'] == player_name for x in not_null_player.player])[0]
         return player_match(not_null_player.iloc[player_idx])
 
+    def position_map(self):
+        for player in self.lineup.player.iloc:
+            pm = self.player_match(player)
+            avg_pos = pm.average_position()
+            average_position.update({player: avg_pos})
+        average_position = pd.DataFrame(average_position).T
+        field = plt.imread('img/field2.png')
+        fig, ax = plt.subplots()
+        ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
+        plt.scatter(average_position[0],
+                    80-average_position[1], c='blue', s=300, edgecolor='red')
+        ax.get_yaxis().set_visible(False)
+        ax.get_xaxis().set_visible(False)
+        plt.title(team+' Average Positioning')
+        lineup = self.lineup.iloc
+        for x in average_position.iterrows():
+            name = x[0]
+            lat, lon = x[1]
+            idx = np.where(lineup.player == name)[0]
+            jersey = str(int(lineup.jersey_number.iloc[idx]))
+            plt.text(lat, 80-lon, jersey, horizontalalignment='center',
+                     verticalalignment='center', c='white')
+        return fig
+
 
 class player_match(match):
     def __init__(self, data):
         match.__init__(self, data)
+        self.name = pd.unique([x['name'] for x in self.data.player])[0]
 
     def position(self):
         position_data = self.data[['location', 'minute', 'second']].dropna()
@@ -86,25 +111,21 @@ class player_match(match):
         avg_lon = (position.lon*position.duration).sum()/time_total
         return (avg_lat, avg_lon)
 
+    def touch_map(self):
+        pos = self.position()
+        field = plt.imread('img/field2.png')
+        fig, ax = plt.subplots()
+        ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
+        plt.scatter(pos.lat, 80-pos.lon, c='blue', s=50, edgecolor='red')
+        ax.get_yaxis().set_visible(False)
+        ax.get_xaxis().set_visible(False)
+        plt.title(self.name+' Touch Map')
+        return fig
+
 
 my_match = load_match(event_list[0])
-my_final_match = my_match.window(start=(90, 0))
-my_match.window(15)
-my_match.team_match('Barcelona')
+# my_final_match = my_match.window(start=(90, 0))
+# my_match.window(15)
+# my_match.team_match('Barcelona')
 my_player = my_match.player_match(my_match.players[15])
-my_player.average_position()
-
-average_position = {}
-for player in my_match.lineup.player:
-    pm = my_match.player_match(player)
-    avg_pos = pm.average_position()
-    average_position.update({player: avg_pos})
-
-average_position = pd.DataFrame(average_position).T
-
-field = plt.imread('images/field.png')
-plt.imshow(field)
-plt.scatter(average_position[0].iloc[11:], average_position[1].iloc[11:])
-plt.ylim(0, 80)
-plt.xlim(0, 120)
-plt.show()
+my_player.touch_map()
