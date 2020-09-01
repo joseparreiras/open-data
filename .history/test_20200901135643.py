@@ -5,7 +5,7 @@ import os
 os.getcwd()
 
 event_list = []
-for r, d, f in os.walk('data/events/'):
+for r, d, f in os.walk('open-data/data/events/'):
     for file in f:
         event_list += [r+file]
 
