@@ -201,103 +201,100 @@ class match(object):
         else:
             return pos
 
-    def play(self, play_id, plot=True):
-        def carry_arrow(loc0, loc1):
-            import matplotlib.patches as patches
-            style = patches.ArrowStyle('-')
-            connection = patches.ConnectionStyle("Arc3", rad=0)
-            arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
-                loc1), arrowstyle=style, connectionstyle=connection, linestyle='--')
-            return arrow
+        def play(self, play_id, plot=True):
+            def carry_arrow(loc0, loc1):
+                import matplotlib.patches as patches
+                style = patches.ArrowStyle('-')
+                connection = patches.ConnectionStyle("Arc3", rad=0)
+                arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
+                    loc1), arrowstyle=style, connectionstyle=connection, linestyle='--')
+                return arrow
 
-        def pass_arrow(loc0, loc1):
-            import matplotlib.patches as patches
-            style = patches.ArrowStyle('->', head_length=5, head_width=5)
-            connection = patches.ConnectionStyle("Arc3", rad=0)
-            arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
-                loc1), arrowstyle=style, connectionstyle=connection, linestyle='-')
-            return arrow
+            def pass_arrow(loc0, loc1):
+                import matplotlib.patches as patches
+                style = patches.ArrowStyle('->', head_length=5, head_width=5)
+                connection = patches.ConnectionStyle("Arc3", rad=0)
+                arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
+                    loc1), arrowstyle=style, connectionstyle=connection, linestyle='-')
+                return arrow
 
-        def shot_arrow(loc0, loc1):
-            import matplotlib.patches as patches
-            style = patches.ArrowStyle('-|>', head_length=2, head_width=2)
-            connection = patches.ConnectionStyle("Arc3", rad=0)
-            arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
-                loc1), arrowstyle=style, connectionstyle=connection, linestyle='-', color='red', linewidth=2)
-            return arrow
+            def shot_arrow(loc0, loc1):
+                import matplotlib.patches as patches
+                style = patches.ArrowStyle('-|>', head_length=5, head_width=5)
+                connection = patches.ConnectionStyle("Arc3", rad=0)
+                arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
+                    loc1), arrowstyle=style, connectionstyle=connection, linestyle='-', color='red', linewidth=2)
+                return arrow
 
-        play_ref = self.data.iloc[np.where(
-            [x == play_id for x in self.data.id])].iloc[0]
-        team_ref = play_ref.team['name']
-        play_idx = np.where(
-            [x == play_ref.possession for x in self.data.possession])
-        play_data = self.data.iloc[play_idx]
+            play_ref = self.data.iloc[np.where(
+                [x == play_id for x in self.data.id])].iloc[0]
+            team_ref = play_ref.team['name']
+            play_idx = np.where(
+                [x == play_ref.possession for x in self.data.possession])
+            play_data = self.data.iloc[play_idx]
 
-        # Plot
-        if plot:
-            # TODO: MAYBE HWHEN THE OTHER TEAM RECOVERS THE BALL, THE PITCH INVERTS SO THAT THIS PLOT IS HALF INVERTED
-            field = plt.imread('img/field2.png')
+            # Plot
+            if plot:
+                # TODO: MAYBE HWHEN THE OTHER TEAM RECOVERS THE BALL, THE PITCH INVERTS SO THAT THIS PLOT IS HALF INVERTED
+                field = plt.imread('img/field2.png')
+                fig, ax = plt.subplots()
+                ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
+                ax.get_yaxis().set_visible(False)
+                ax.get_xaxis().set_visible(False)
+                for x in play_data.iterrows():
+                    play = x[1]
+                    play_loc = play.location
+                    play_type = play.type['name']
+                    if not play_type == 'Pressure':
+                        if play_type == 'Ball Recovery':
+                            plt.scatter(play_loc[0], play_loc[1],
+                                        s=50, c='purple', edgecolor='black')
+                        elif play_type == 'Ball Receipt*':
+                            plt.scatter(play_loc[0], play_loc[1],
+                                        s=50, c='blue', edgecolor='black')
+                        elif play_type == 'Carry':
+                            carry_loc = play.carry['end_location']
+                            plt.scatter(carry_loc[0], carry_loc[1],
+                                        s=50, c='blue', edgecolor='black')
+                            plt.gca().add_patch(carry_arrow(play_loc, carry_loc))
+                        elif play_type == 'Pass':
+                            pass_end = play['pass']['end_location']
+                            if 'outcome' in play['pass'].keys():
+                                # outcome = play['pass']['outcome']['name']
+                                plt.scatter(
+                                    pass_end[0], pass_end[1], s=50, c='red', marker='x', edgecolor='black')
+                            plt.gca().add_patch(pass_arrow(play_loc, pass_end))
+                        elif play_type == 'Shot':
+                            shot_end = play.shot['end_location']
+                            plt.scatter(play_loc[0], play_loc[1],
+                                        s=10, c='blue', edgecolor='black')
+                            plt.gca().add_patch(shot_arrow(play_loc, shot_end))
+                            if play.shot['outcome']['name'] == 'Goal':
+                                plt.scatter(
+                                    shot_end[0], shot_end[1], s=50, c='yellow', marker='*', edgecolor='black')
+                            else:
+                                plt.scatter(
+                                    shot_end[0], shot_end[1], s=50, c='red', marker='x', edgecolor='black')
+                plt.xlim(0, 120)
+                plt.ylim(0, 80)
+                return fig
+            else:
+                return play_data
+
+        def heatmap(self):
+            touches = self.touch_map(plot=False)
             fig, ax = plt.subplots()
-            ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
-            ax.get_yaxis().set_visible(False)
-            ax.get_xaxis().set_visible(False)
-            for x in play_data.iterrows():
-                play = x[1]
-                play_loc = play.location
-                play_type = play.type['name']
-                if not play_type == 'Pressure':
-                    if play_type == 'Ball Recovery':
-                        plt.scatter(play_loc[0], play_loc[1],
-                                    s=50, c='purple', edgecolor='black')
-                    elif play_type == 'Ball Receipt*':
-                        plt.scatter(play_loc[0], play_loc[1],
-                                    s=50, c='blue', edgecolor='black')
-                    elif play_type == 'Carry':
-                        carry_loc = play.carry['end_location']
-                        plt.scatter(carry_loc[0], carry_loc[1],
-                                    s=50, c='blue', edgecolor='black')
-                        plt.gca().add_patch(carry_arrow(play_loc, carry_loc))
-                    elif play_type == 'Pass':
-                        pass_end = play['pass']['end_location']
-                        if 'outcome' in play['pass'].keys():
-                            # outcome = play['pass']['outcome']['name']
-                            plt.scatter(
-                                pass_end[0], pass_end[1], s=50, c='red', marker='X', edgecolor='black')
-                        plt.gca().add_patch(pass_arrow(play_loc, pass_end))
-                    elif play_type == 'Shot':
-                        shot_end = play.shot['end_location']
-                        plt.scatter(play_loc[0], play_loc[1],
-                                    s=50, c='blue', edgecolor='black')
-                        plt.gca().add_patch(shot_arrow(play_loc, shot_end))
-                        if play.shot['outcome']['name'] == 'Goal':
-                            plt.scatter(
-                                shot_end[0], shot_end[1], s=200, c='yellow', marker='*', edgecolor='black')
-                        else:
-                            plt.scatter(
-                                shot_end[0], shot_end[1], s=50, c='red', marker='x', edgecolor='black')
+            field = plt.imread('img/field2.png')
+            ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
+            kdeplot = sns.kdeplot(touches.lat, 80-touches.lon,
+                                  cmap='Reds', shade=True, alpha=.5)
             plt.xlim(0, 120)
             plt.ylim(0, 80)
+            kdeplot.collections[0].set_alpha(0)
+            ax.get_yaxis().set_visible(False)
+            ax.get_xaxis().set_visible(False)
+            plt.title(self.name + ' (Heatmap)')
             return fig
-        else:
-            return play_data
-
-    def heatmap(self):
-        import matplotlib.pyplot as plt
-        from seaborn import kdeplot
-
-        touches = self.touch_map(plot=False)
-        fig, ax = plt.subplots()
-        field = plt.imread('img/field2.png')
-        ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
-        kdeplot = kdeplot(
-            touches.lat, 80-touches.lon, cmap='Reds', shade=True, alpha=.5)
-        plt.xlim(0, 120)
-        plt.ylim(0, 80)
-        kdeplot.collections[0].set_alpha(0)
-        ax.get_yaxis().set_visible(False)
-        ax.get_xaxis().set_visible(False)
-        plt.title(self.name + ' (Heatmap)')
-        return fig
 
 
 class player_match(match):
@@ -330,15 +327,12 @@ class player_match(match):
         return (avg_lat, avg_lon)
 
     def heatmap(self):
-        import matplotlib.pyplot as plt
-        from seaborn import kdeplot
-
         touches = self.touch_map(plot=False)
         fig, ax = plt.subplots()
         field = plt.imread('img/field2.png')
         ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
-        kdeplot = kdeplot(touches.lat, 80-touches.lon,
-                          cmap='Reds', shade=True, alpha=.5)
+        kdeplot = sns.kdeplot(touches.lat, 80-touches.lon,
+                              cmap='Reds', shade=True, alpha=.5)
         plt.xlim(0, 120)
         plt.ylim(0, 80)
         kdeplot.collections[0].set_alpha(0)

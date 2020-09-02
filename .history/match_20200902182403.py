@@ -267,7 +267,7 @@ class match(object):
                     elif play_type == 'Shot':
                         shot_end = play.shot['end_location']
                         plt.scatter(play_loc[0], play_loc[1],
-                                    s=50, c='blue', edgecolor='black')
+                                    s=10, c='blue', edgecolor='black')
                         plt.gca().add_patch(shot_arrow(play_loc, shot_end))
                         if play.shot['outcome']['name'] == 'Goal':
                             plt.scatter(

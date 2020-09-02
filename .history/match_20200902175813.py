@@ -220,7 +220,7 @@ class match(object):
 
         def shot_arrow(loc0, loc1):
             import matplotlib.patches as patches
-            style = patches.ArrowStyle('-|>', head_length=2, head_width=2)
+            style = patches.ArrowStyle('-|>', head_length=5, head_width=5)
             connection = patches.ConnectionStyle("Arc3", rad=0)
             arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
                 loc1), arrowstyle=style, connectionstyle=connection, linestyle='-', color='red', linewidth=2)
@@ -262,16 +262,16 @@ class match(object):
                         if 'outcome' in play['pass'].keys():
                             # outcome = play['pass']['outcome']['name']
                             plt.scatter(
-                                pass_end[0], pass_end[1], s=50, c='red', marker='X', edgecolor='black')
+                                pass_end[0], pass_end[1], s=50, c='red', marker='x', edgecolor='black')
                         plt.gca().add_patch(pass_arrow(play_loc, pass_end))
                     elif play_type == 'Shot':
                         shot_end = play.shot['end_location']
                         plt.scatter(play_loc[0], play_loc[1],
-                                    s=50, c='blue', edgecolor='black')
+                                    s=10, c='blue', edgecolor='black')
                         plt.gca().add_patch(shot_arrow(play_loc, shot_end))
                         if play.shot['outcome']['name'] == 'Goal':
                             plt.scatter(
-                                shot_end[0], shot_end[1], s=200, c='yellow', marker='*', edgecolor='black')
+                                shot_end[0], shot_end[1], s=50, c='yellow', marker='*', edgecolor='black')
                         else:
                             plt.scatter(
                                 shot_end[0], shot_end[1], s=50, c='red', marker='x', edgecolor='black')
@@ -282,14 +282,11 @@ class match(object):
             return play_data
 
     def heatmap(self):
-        import matplotlib.pyplot as plt
-        from seaborn import kdeplot
-
         touches = self.touch_map(plot=False)
         fig, ax = plt.subplots()
         field = plt.imread('img/field2.png')
         ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
-        kdeplot = kdeplot(
+        kdeplot = sns.kdeplot(
             touches.lat, 80-touches.lon, cmap='Reds', shade=True, alpha=.5)
         plt.xlim(0, 120)
         plt.ylim(0, 80)
@@ -330,15 +327,12 @@ class player_match(match):
         return (avg_lat, avg_lon)
 
     def heatmap(self):
-        import matplotlib.pyplot as plt
-        from seaborn import kdeplot
-
         touches = self.touch_map(plot=False)
         fig, ax = plt.subplots()
         field = plt.imread('img/field2.png')
         ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
-        kdeplot = kdeplot(touches.lat, 80-touches.lon,
-                          cmap='Reds', shade=True, alpha=.5)
+        kdeplot = sns.kdeplot(touches.lat, 80-touches.lon,
+                              cmap='Reds', shade=True, alpha=.5)
         plt.xlim(0, 120)
         plt.ylim(0, 80)
         kdeplot.collections[0].set_alpha(0)

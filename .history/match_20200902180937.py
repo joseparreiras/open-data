@@ -262,16 +262,16 @@ class match(object):
                         if 'outcome' in play['pass'].keys():
                             # outcome = play['pass']['outcome']['name']
                             plt.scatter(
-                                pass_end[0], pass_end[1], s=50, c='red', marker='X', edgecolor='black')
+                                pass_end[0], pass_end[1], s=50, c='red', marker='x', edgecolor='black')
                         plt.gca().add_patch(pass_arrow(play_loc, pass_end))
                     elif play_type == 'Shot':
                         shot_end = play.shot['end_location']
                         plt.scatter(play_loc[0], play_loc[1],
-                                    s=50, c='blue', edgecolor='black')
+                                    s=10, c='blue', edgecolor='black')
                         plt.gca().add_patch(shot_arrow(play_loc, shot_end))
                         if play.shot['outcome']['name'] == 'Goal':
                             plt.scatter(
-                                shot_end[0], shot_end[1], s=200, c='yellow', marker='*', edgecolor='black')
+                                shot_end[0], shot_end[1], s=50, c='yellow', marker='*', edgecolor='black')
                         else:
                             plt.scatter(
                                 shot_end[0], shot_end[1], s=50, c='red', marker='x', edgecolor='black')
