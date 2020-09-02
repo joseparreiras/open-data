@@ -24,7 +24,6 @@ class match(object):
         self.active_time = [min(time_tup), max(time_tup)]
         self.players = pd.Series(pd.unique([x['name']
                                             for x in self.data.player.dropna()]))
-        self.name = ' x '.join(self.teams)
 
     def window(self, start, end=(100, 0)):
         if type(start) == int:
@@ -127,7 +126,7 @@ class match(object):
 
     def touch_map(self, touch_type=None, plot=True):
         touch_name = ['Ball Received', 'Ball Recovery*', 'Carry', 'Dribble',
-                      'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
+                    'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
         if not touch_type == None:
             if type(touch_type) == str:
                 touch_type = [touch_type]
@@ -145,7 +144,10 @@ class match(object):
             plt.scatter(pos.lat, 80-pos.lon, c='blue', s=50, edgecolor='red')
             ax.get_yaxis().set_visible(False)
             ax.get_xaxis().set_visible(False)
-            plt.title(self.name+' (Touch Map)')
+            if type(self) == player_match:
+                plt.title(self.name+' Touch Map')
+            else:
+                plt.title('Touch Map')
             return fig
         else:
             return pos
@@ -192,5 +194,5 @@ class player_match(match):
         kdeplot.collections[0].set_alpha(0)
         ax.get_yaxis().set_visible(False)
         ax.get_xaxis().set_visible(False)
-        plt.title(self.name + ' (Heatmap)')
+        plt.title(self.name + ' Heatmap')
         return fig

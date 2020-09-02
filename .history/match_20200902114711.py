@@ -145,7 +145,7 @@ class match(object):
             plt.scatter(pos.lat, 80-pos.lon, c='blue', s=50, edgecolor='red')
             ax.get_yaxis().set_visible(False)
             ax.get_xaxis().set_visible(False)
-            plt.title(self.name+' (Touch Map)')
+            plt.title(self.name+' Touch Map')
             return fig
         else:
             return pos
@@ -192,5 +192,5 @@ class player_match(match):
         kdeplot.collections[0].set_alpha(0)
         ax.get_yaxis().set_visible(False)
         ax.get_xaxis().set_visible(False)
-        plt.title(self.name + ' (Heatmap)')
+        plt.title(self.name + ' Heatmap')
         return fig

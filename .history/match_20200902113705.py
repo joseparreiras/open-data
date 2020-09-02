@@ -24,7 +24,6 @@ class match(object):
         self.active_time = [min(time_tup), max(time_tup)]
         self.players = pd.Series(pd.unique([x['name']
                                             for x in self.data.player.dropna()]))
-        self.name = ' x '.join(self.teams)
 
     def window(self, start, end=(100, 0)):
         if type(start) == int:
@@ -125,31 +124,6 @@ class match(object):
             summary_tbl[team].update(pass_summary)
         return pd.DataFrame(summary_tbl)
 
-    def touch_map(self, touch_type=None, plot=True):
-        touch_name = ['Ball Received', 'Ball Recovery*', 'Carry', 'Dribble',
-                      'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
-        if not touch_type == None:
-            if type(touch_type) == str:
-                touch_type = [touch_type]
-            touch_name = list(set(touch_name) & set(touch_type))
-        touch_idx = np.where(
-            [x['name'] in touch_name for x in self.data.type])[0]
-        touches = self.data.iloc[touch_idx][['location']]
-        lat = [x[0][0] for x in touches.values]
-        lon = [x[0][1] for x in touches.values]
-        pos = pd.DataFrame({'lat': lat, 'lon': lon})
-        if plot:
-            field = plt.imread('img/field2.png')
-            fig, ax = plt.subplots()
-            ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
-            plt.scatter(pos.lat, 80-pos.lon, c='blue', s=50, edgecolor='red')
-            ax.get_yaxis().set_visible(False)
-            ax.get_xaxis().set_visible(False)
-            plt.title(self.name+' (Touch Map)')
-            return fig
-        else:
-            return pos
-
 
 class player_match(match):
     def __init__(self, data):
@@ -180,6 +154,31 @@ class player_match(match):
         avg_lon = (position.lon*position.duration).sum()/time_total
         return (avg_lat, avg_lon)
 
+    def touch_map(self, touch_type=None, plot=True):
+        touch_name = ['Ball Received', 'Ball Recovery*', 'Carry', 'Dribble',
+                      'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
+        if not touch_type == None:
+            if type(touch_type) == str:
+                touch_type = [touch_type]
+            touch_name = list(set(touch_name) & set(touch_type))
+        touch_idx = np.where(
+            [x['name'] in touch_name for x in self.data.type])[0]
+        touches = self.data.iloc[touch_idx][['location']]
+        lat = [x[0][0] for x in touches.values]
+        lon = [x[0][1] for x in touches.values]
+        pos = pd.DataFrame({'lat': lat, 'lon': lon})
+        if plot:
+            field = plt.imread('img/field2.png')
+            fig, ax = plt.subplots()
+            ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
+            plt.scatter(pos.lat, 80-pos.lon, c='blue', s=50, edgecolor='red')
+            ax.get_yaxis().set_visible(False)
+            ax.get_xaxis().set_visible(False)
+            plt.title(self.name+' Touch Map')
+            return fig
+        else:
+            return pos
+
     def heatmap(self):
         touches = self.touch_map(plot=False)
         fig, ax = plt.subplots()
@@ -192,5 +191,5 @@ class player_match(match):
         kdeplot.collections[0].set_alpha(0)
         ax.get_yaxis().set_visible(False)
         ax.get_xaxis().set_visible(False)
-        plt.title(self.name + ' (Heatmap)')
+        plt.title(self.name + ' Heatmap')
         return fig

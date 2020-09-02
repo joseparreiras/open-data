@@ -15,6 +15,9 @@ class match(object):
         import pandas as pd
         import numpy as np
 
+        def list_player(data):
+            return [x['name'] for x in data.player.dropna()]
+
         self.data = pd.DataFrame(data)
         game_start = np.where(
             [x['name'] == 'Starting XI' for x in self.data.type])[0]
@@ -22,9 +25,8 @@ class match(object):
         time_data = self.data[['minute', 'second']]
         time_tup = [(t[1].minute, t[1].second) for t in time_data.iterrows()]
         self.active_time = [min(time_tup), max(time_tup)]
-        self.players = pd.Series(pd.unique([x['name']
-                                            for x in self.data.player.dropna()]))
-        self.name = ' x '.join(self.teams)
+        self.players = pd.unique([x['name']
+                                  for x in self.data.player.dropna()])
 
     def window(self, start, end=(100, 0)):
         if type(start) == int:
@@ -48,7 +50,7 @@ class match(object):
             [x['name'] == player_name for x in not_null_player.player])[0]
         return player_match(not_null_player.iloc[player_idx])
 
-    def position_map(self, starting=True, plot=True):
+    def position_map(self, starting=True):
         field = plt.imread('img/field2.png')
         for i in range(len(self.teams)):
             team = self.teams[i]
@@ -62,19 +64,18 @@ class match(object):
                 pm = self.player_match(player)
                 avg_pos = pm.average_position()
                 average_position.update({player: avg_pos})
+
             average_position = pd.DataFrame(average_position).T
+
             # Figure
-            if plot:
-                fig, ax = plt.subplots()
-                ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
-                plt.scatter(average_position[0],
-                            80-average_position[1], c='blue', s=300, edgecolor='red')
-                ax.get_yaxis().set_visible(False)
-                ax.get_xaxis().set_visible(False)
-                plt.title(team+' Average Positioning')
-                fig
-            else:
-                return average_position
+            fig, ax = plt.subplots()
+            ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
+            plt.scatter(average_position[0],
+                        80-average_position[1], c='blue', s=300, edgecolor='red')
+            ax.get_yaxis().set_visible(False)
+            ax.get_xaxis().set_visible(False)
+            plt.title(team+' Average Positioning')
+            return fig
 
     def summary(self):
         summary_tbl = {team: {} for team in self.teams}
@@ -125,31 +126,6 @@ class match(object):
             summary_tbl[team].update(pass_summary)
         return pd.DataFrame(summary_tbl)
 
-    def touch_map(self, touch_type=None, plot=True):
-        touch_name = ['Ball Received', 'Ball Recovery*', 'Carry', 'Dribble',
-                      'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
-        if not touch_type == None:
-            if type(touch_type) == str:
-                touch_type = [touch_type]
-            touch_name = list(set(touch_name) & set(touch_type))
-        touch_idx = np.where(
-            [x['name'] in touch_name for x in self.data.type])[0]
-        touches = self.data.iloc[touch_idx][['location']]
-        lat = [x[0][0] for x in touches.values]
-        lon = [x[0][1] for x in touches.values]
-        pos = pd.DataFrame({'lat': lat, 'lon': lon})
-        if plot:
-            field = plt.imread('img/field2.png')
-            fig, ax = plt.subplots()
-            ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
-            plt.scatter(pos.lat, 80-pos.lon, c='blue', s=50, edgecolor='red')
-            ax.get_yaxis().set_visible(False)
-            ax.get_xaxis().set_visible(False)
-            plt.title(self.name+' (Touch Map)')
-            return fig
-        else:
-            return pos
-
 
 class player_match(match):
     def __init__(self, data):
@@ -180,17 +156,19 @@ class player_match(match):
         avg_lon = (position.lon*position.duration).sum()/time_total
         return (avg_lat, avg_lon)
 
-    def heatmap(self):
-        touches = self.touch_map(plot=False)
-        fig, ax = plt.subplots()
+    def touch_map(self):
+        touch_name = ['Ball Received', 'Ball Recovery*', 'Carry', 'Dribble',
+                      'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
+        touch_idx = np.where(
+            [x['name'] in touch_name for x in self.data.type])[0]
+        touches = self.data.iloc[touch_idx][['location']]
+        lat = [x[0][0] for x in touches.values]
+        lon = [x[0][1] for x in touches.values]
         field = plt.imread('img/field2.png')
-        ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
-        kdeplot = sns.kdeplot(touches.lat, 80-touches.lon,
-                              cmap='Reds', shade=True, alpha=.5)
-        plt.xlim(0, 120)
-        plt.ylim(0, 80)
-        kdeplot.collections[0].set_alpha(0)
+        fig, ax = plt.subplots()
+        ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
+        plt.scatter(lat, 80-lon, c='blue', s=50, edgecolor='red')
         ax.get_yaxis().set_visible(False)
         ax.get_xaxis().set_visible(False)
-        plt.title(self.name + ' (Heatmap)')
+        plt.title(self.name+' Touch Map')
         return fig
