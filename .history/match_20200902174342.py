@@ -235,7 +235,6 @@ class match(object):
 
             # Plot
             if plot:
-                # TODO: MAYBE HWHEN THE OTHER TEAM RECOVERS THE BALL, THE PITCH INVERTS SO THAT THIS PLOT IS HALF INVERTED
                 field = plt.imread('img/field2.png')
                 fig, ax = plt.subplots()
                 ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
