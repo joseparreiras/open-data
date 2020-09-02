@@ -82,6 +82,14 @@ class match(object):
         for team in self.teams:
             team_match = self.team_match(team)
 
+            # Possession
+            team_possession_idx = np.where(
+                [x['name'] == team for x in team_match.data.possession_team])
+            team_possession = team_match.data.duration.iloc[team_possession_idx]
+            possession_pct = sum(team_possession.dropna())/match_duration*100
+
+            summary_tbl[team].update({'possession': round(possession_pct, 2)})
+
             # Shots
             shots_idx = np.where(
                 [x['name'] == 'Shot' for x in team_match.data.type])
@@ -102,14 +110,6 @@ class match(object):
                 'shots_blocked': len(shots_blocked)
             }
             summary_tbl[team].update(shot_summary)
-
-            # Possession
-            team_possession_idx = np.where(
-                [x['name'] == team for x in team_match.data.possession_team])
-            team_possession = team_match.data.duration.iloc[team_possession_idx]
-            possession_pct = sum(team_possession.dropna())/match_duration*100
-
-            summary_tbl[team].update({'possession': round(possession_pct, 2)})
 
             # Passes
             passes_idx = np.where(

@@ -82,6 +82,14 @@ class match(object):
         for team in self.teams:
             team_match = self.team_match(team)
 
+            # Possession
+            team_possession_idx = np.where(
+                [x['name'] == team for x in team_match.data.possession_team])
+            team_possession = team_match.data.duration.iloc[team_possession_idx]
+            possession_pct = sum(team_possession.dropna())/match_duration*100
+
+            summary_tbl[team].update({'possession': round(possession_pct, 2)})
+
             # Shots
             shots_idx = np.where(
                 [x['name'] == 'Shot' for x in team_match.data.type])
@@ -102,14 +110,6 @@ class match(object):
                 'shots_blocked': len(shots_blocked)
             }
             summary_tbl[team].update(shot_summary)
-
-            # Possession
-            team_possession_idx = np.where(
-                [x['name'] == team for x in team_match.data.possession_team])
-            team_possession = team_match.data.duration.iloc[team_possession_idx]
-            possession_pct = sum(team_possession.dropna())/match_duration*100
-
-            summary_tbl[team].update({'possession': round(possession_pct, 2)})
 
             # Passes
             passes_idx = np.where(
@@ -141,21 +141,21 @@ class match(object):
                 [x['name'] == 'Foul Committed' for x in team_match.data.type])[0]
             yellow_cards_foul = [x for x in team_match.data.foul_committed.dropna(
             ) if 'card' in x.keys() and x['card']['name'] in ['Yellow Card', 'Second Yellow']]
-            yellow_cards_beh = [x for x in team_match.data.bad_behaviour.dropna(
+            yellow_card_beh = [x for x in team_match.data.bad_behaviour.dropna(
             ) if 'card' in x.keys() and x['card']['name'] in ['Yellow Card', 'Second Yellow']]
-            yellow_cards = yellow_cards_foul+yellow_cards_beh
+            yellow_card = yellow_card_foul+yellow_card_beh
 
             red_cards_foul = [x for x in team_match.data.foul_committed.dropna(
             ) if 'card' in x.keys() and x['card']['name'] in ['Red Card', 'Second Yellow']]
-            red_cards_beh = [x for x in team_match.data.bad_behaviour.dropna(
+            red_card_beh = [x for x in team_match.data.bad_behaviour.dropna(
             ) if 'card' in x.keys() and x['card']['name'] in ['Red Card', 'Second Yellow']]
-            red_cards = red_cards_foul+red_cards_beh
+            red_card = red_card_foul+red_card_beh
 
             foul_summary = {
                 'fouls': len(foul_idx),
-                'yellow_cards': len(yellow_cards),
-                'red_cards': len(red_cards)
-            }
+                            'yellow_cards': len(yellow_cards),
+                            'red_cards': len(red_cards)
+                            }
 
             summary_tbl[team].update(foul_summary)
 
