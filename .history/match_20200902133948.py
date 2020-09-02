@@ -201,9 +201,6 @@ class match(object):
         else:
             return pos
 
-        def play(self, play_id):
-            play_ref = self.data.iloc[self.data.id == play_id]
-
 
 class player_match(match):
     def __init__(self, data):

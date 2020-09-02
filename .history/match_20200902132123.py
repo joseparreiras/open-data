@@ -9,7 +9,8 @@ def load_match(file):
 
 
 class match(object):
-    # TODO: Track a play based on its index
+    # TODO: Change definition to FULL MATCH and CHILD MATCH. Child Match inherits the lineups from the initial match but excludes the subed-out (not subed-in) ones
+    # TODO: Set the definition of ACTIVE PLAYERS in that match
     def __init__(self, data):
         import pandas as pd
         import numpy as np
@@ -200,9 +201,6 @@ class match(object):
             return fig
         else:
             return pos
-
-        def play(self, play_id):
-            play_ref = self.data.iloc[self.data.id == play_id]
 
 
 class player_match(match):
