@@ -13,22 +13,21 @@ def load_match(match_id, path='data/'):
 
 class match(object):
     # TODO: Track a play based on its index
-    def __init__(self, data, lineups):
+    def __init__(self, data, lineup):
         import pandas as pd
         import numpy as np
 
         self.data = pd.DataFrame(data)
-        self.lineups = lineups
-        for
-        self.teams = list(self.lineups.team_name)
-        self.players = pd.Series(pd.unique([x['name']
-                                            for x in self.data.player.dropna()]))
-        self.name = ' x '.join(self.teams)
         game_start = np.where(
             [x['name'] == 'Starting XI' for x in self.data.type])[0]
+        self.teams = pd.unique([x['name'] for x in self.data.team])
         time_data = self.data[['minute', 'second']]
         time_tup = [(t[1].minute, t[1].second) for t in time_data.iterrows()]
         self.active_time = [min(time_tup), max(time_tup)]
+        self.players = pd.Series(pd.unique([x['name']
+                                            for x in self.data.player.dropna()]))
+        self.name = ' x '.join(self.teams)
+        self.lineup = pd.DataFrame(lineup)
 
     def window(self, start, end=(100, 0)):
         if type(start) == int:

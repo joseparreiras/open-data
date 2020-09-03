@@ -1,8 +1,8 @@
 import matplotlib.patches as patches
 from match import *
 
-match_id = 15946
-my_match = load_match(match_id)
+match_id =
+my_match = load_match(15946)
 
 # # Dribble
 
@@ -40,5 +40,4 @@ my_match = load_match(match_id)
 
 # # Pass Network
 
-lineup_path = 'data/lineups/%i.json' % match_id
-lineups = pd.read_json(lineup_path)
+my_match.data.id

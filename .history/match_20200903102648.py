@@ -3,32 +3,27 @@ import pandas as pd
 import numpy as np
 
 
-def load_match(match_id, path='data/'):
-    match_path = path+'events/'+match_id+'.json'
-    lineup_path = path+'lineups/'+match_id+'.json'
-    match_data = pd.read_json(match_path)
-    match_lineup = pd.read_json(lineup_path)
-    return(match(match_data, match_lineup))
+def load_match(file):
+    match_data = pd.read_json(file)
+    return(match(match_data))
 
 
 class match(object):
     # TODO: Track a play based on its index
-    def __init__(self, data, lineups):
+    def __init__(self, data):
         import pandas as pd
         import numpy as np
 
         self.data = pd.DataFrame(data)
-        self.lineups = lineups
-        for
-        self.teams = list(self.lineups.team_name)
-        self.players = pd.Series(pd.unique([x['name']
-                                            for x in self.data.player.dropna()]))
-        self.name = ' x '.join(self.teams)
         game_start = np.where(
             [x['name'] == 'Starting XI' for x in self.data.type])[0]
+        self.teams = pd.unique([x['name'] for x in self.data.team])
         time_data = self.data[['minute', 'second']]
         time_tup = [(t[1].minute, t[1].second) for t in time_data.iterrows()]
         self.active_time = [min(time_tup), max(time_tup)]
+        self.players = pd.Series(pd.unique([x['name']
+                                            for x in self.data.player.dropna()]))
+        self.name = ' x '.join(self.teams)
 
     def window(self, start, end=(100, 0)):
         if type(start) == int:
@@ -182,47 +177,6 @@ class match(object):
 
         return pd.DataFrame(summary_tbl)
 
-    def pass_network(self):
-        for team in mself.teams:
-            my_team = self.team_match(team)
-            pass_ntw = {player: {} for player in my_team.players}
-            pass_comp_ntw = {player: {} for player in my_team.players}
-
-            for player in my_team.players:
-                my_player = my_team.player_match(player)
-
-                passes_idx = np.where(
-                    [x['name'] == 'Pass' for x in my_player.data.type])
-                passes = my_player.data.iloc[passes_idx]['pass']
-
-                recipients = np.unique(
-                    [x['recipient']['name'] for x in list(passes) if 'recipient' in x.keys()])
-
-                player_ntw = {i: 0 for i in recipients}
-                player_comp_ntw = {i: 0 for i in recipients}
-
-                for teammate in recipients:
-                    links = [x for x in passes if 'recipient' in x.keys(
-                    ) and x['recipient']['name'] == teammate]
-                    correct_links = [
-                        x for x in links if not 'outcome' in x.keys()]
-                    player_ntw[teammate] = len(links)
-                    player_comp_ntw[teammate] = len(correct_links)
-
-                pass_ntw.update({player: player_ntw})
-                pass_comp_ntw.update({player: player_comp_ntw})
-
-            pass_ntw = pd.DataFrame(pass_ntw).replace(np.nan, 0).T
-            pass_ntw = pass_ntw[pass_ntw.index]
-            pass_comp_ntw = pd.DataFrame(pass_comp_ntw).replace(np.nan, 0).T
-            pass_comp_ntw = pass_comp_ntw[pass_comp_ntw.index]
-
-            plt.matshow(pass_ntw, cmap='Reds')
-            plt.xticks(ticks=range(len(pass_ntw.index)),
-                       labels=list(pass_ntw.index), rotation=90)
-            plt.yticks(ticks=range(len(pass_ntw.index)),
-                       labels=list(pass_ntw.index), )
-
     def touch_map(self, touch_type=None, plot=True):
         touch_name = ['Ball Received', 'Ball Recovery*', 'Carry', 'Dribble',
                       'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
@@ -252,7 +206,6 @@ class match(object):
     def play(self, play_id, plot=True):
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
-
         def carry_arrow(loc0, loc1):
             style = patches.ArrowStyle('-')
             connection = patches.ConnectionStyle("Arc3", rad=0)
@@ -352,14 +305,14 @@ class match(object):
     def shot_plot(self, shot_id):
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
-
+        
         def shot_arrow(loc0, loc1):
             style = patches.ArrowStyle('-|>', head_length=2, head_width=2)
             connection = patches.ConnectionStyle("Arc3", rad=0)
             arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
                 loc1), arrowstyle=style, connectionstyle=connection, linestyle='-', color='red', linewidth=2)
             return arrow
-
+        
         shot_idx = np.where(self.data.id == shot_id)
         x = self.data.iloc[shot_idx]
         shot = x.shot
@@ -398,15 +351,13 @@ class match(object):
         plt.scatter(shot_end[0], shot_end[1], marker=marker,
                     color=color, s=200, edgecolor='black')
 
-        plt.scatter(player_loc[0], player_loc[1],
-                    c='blue', s=200, edgecolor='black')
+        plt.scatter(player_loc[0], player_loc[1], c='blue', s=200, edgecolor='black')
 
         ax.get_yaxis().set_visible(False)
         ax.get_xaxis().set_visible(False)
         plt.xlim(60, 120)
         plt.gca().invert_yaxis()
         return fig
-
 
 class player_match(match):
     def __init__(self, data):

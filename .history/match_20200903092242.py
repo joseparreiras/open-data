@@ -3,32 +3,27 @@ import pandas as pd
 import numpy as np
 
 
-def load_match(match_id, path='data/'):
-    match_path = path+'events/'+match_id+'.json'
-    lineup_path = path+'lineups/'+match_id+'.json'
-    match_data = pd.read_json(match_path)
-    match_lineup = pd.read_json(lineup_path)
-    return(match(match_data, match_lineup))
+def load_match(file):
+    match_data = pd.read_json(file)
+    return(match(match_data))
 
 
 class match(object):
     # TODO: Track a play based on its index
-    def __init__(self, data, lineups):
+    def __init__(self, data):
         import pandas as pd
         import numpy as np
 
         self.data = pd.DataFrame(data)
-        self.lineups = lineups
-        for
-        self.teams = list(self.lineups.team_name)
-        self.players = pd.Series(pd.unique([x['name']
-                                            for x in self.data.player.dropna()]))
-        self.name = ' x '.join(self.teams)
         game_start = np.where(
             [x['name'] == 'Starting XI' for x in self.data.type])[0]
+        self.teams = pd.unique([x['name'] for x in self.data.team])
         time_data = self.data[['minute', 'second']]
         time_tup = [(t[1].minute, t[1].second) for t in time_data.iterrows()]
         self.active_time = [min(time_tup), max(time_tup)]
+        self.players = pd.Series(pd.unique([x['name']
+                                            for x in self.data.player.dropna()]))
+        self.name = ' x '.join(self.teams)
 
     def window(self, start, end=(100, 0)):
         if type(start) == int:
@@ -88,11 +83,10 @@ class match(object):
                 fig, ax = plt.subplots()
                 ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
                 plt.scatter(average_position[0],
-                            average_position[1], c='blue', s=300, edgecolor='red')
+                            80-average_position[1], c='blue', s=300, edgecolor='red')
                 ax.get_yaxis().set_visible(False)
                 ax.get_xaxis().set_visible(False)
                 plt.title(team+' Average Positioning')
-                plt.gca().invert_yaxis()
                 fig
             else:
                 return average_position
@@ -182,47 +176,6 @@ class match(object):
 
         return pd.DataFrame(summary_tbl)
 
-    def pass_network(self):
-        for team in mself.teams:
-            my_team = self.team_match(team)
-            pass_ntw = {player: {} for player in my_team.players}
-            pass_comp_ntw = {player: {} for player in my_team.players}
-
-            for player in my_team.players:
-                my_player = my_team.player_match(player)
-
-                passes_idx = np.where(
-                    [x['name'] == 'Pass' for x in my_player.data.type])
-                passes = my_player.data.iloc[passes_idx]['pass']
-
-                recipients = np.unique(
-                    [x['recipient']['name'] for x in list(passes) if 'recipient' in x.keys()])
-
-                player_ntw = {i: 0 for i in recipients}
-                player_comp_ntw = {i: 0 for i in recipients}
-
-                for teammate in recipients:
-                    links = [x for x in passes if 'recipient' in x.keys(
-                    ) and x['recipient']['name'] == teammate]
-                    correct_links = [
-                        x for x in links if not 'outcome' in x.keys()]
-                    player_ntw[teammate] = len(links)
-                    player_comp_ntw[teammate] = len(correct_links)
-
-                pass_ntw.update({player: player_ntw})
-                pass_comp_ntw.update({player: player_comp_ntw})
-
-            pass_ntw = pd.DataFrame(pass_ntw).replace(np.nan, 0).T
-            pass_ntw = pass_ntw[pass_ntw.index]
-            pass_comp_ntw = pd.DataFrame(pass_comp_ntw).replace(np.nan, 0).T
-            pass_comp_ntw = pass_comp_ntw[pass_comp_ntw.index]
-
-            plt.matshow(pass_ntw, cmap='Reds')
-            plt.xticks(ticks=range(len(pass_ntw.index)),
-                       labels=list(pass_ntw.index), rotation=90)
-            plt.yticks(ticks=range(len(pass_ntw.index)),
-                       labels=list(pass_ntw.index), )
-
     def touch_map(self, touch_type=None, plot=True):
         touch_name = ['Ball Received', 'Ball Recovery*', 'Carry', 'Dribble',
                       'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
@@ -240,20 +193,17 @@ class match(object):
             field = plt.imread('img/field2.png')
             fig, ax = plt.subplots()
             ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
-            plt.scatter(pos.lat, pos.lon, c='blue', s=50, edgecolor='red')
+            plt.scatter(pos.lat, 80-pos.lon, c='blue', s=50, edgecolor='red')
             ax.get_yaxis().set_visible(False)
             ax.get_xaxis().set_visible(False)
             plt.title(self.name+' (Touch Map)')
-            plt.gca().invert_yaxis()
             return fig
         else:
             return pos
 
     def play(self, play_id, plot=True):
-        import matplotlib.pyplot as plt
-        import matplotlib.patches as patches
-
         def carry_arrow(loc0, loc1):
+            import matplotlib.patches as patches
             style = patches.ArrowStyle('-')
             connection = patches.ConnectionStyle("Arc3", rad=0)
             arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
@@ -261,6 +211,7 @@ class match(object):
             return arrow
 
         def pass_arrow(loc0, loc1):
+            import matplotlib.patches as patches
             style = patches.ArrowStyle('->', head_length=5, head_width=5)
             connection = patches.ConnectionStyle("Arc3", rad=0)
             arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
@@ -268,6 +219,7 @@ class match(object):
             return arrow
 
         def shot_arrow(loc0, loc1):
+            import matplotlib.patches as patches
             style = patches.ArrowStyle('-|>', head_length=2, head_width=2)
             connection = patches.ConnectionStyle("Arc3", rad=0)
             arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
@@ -283,7 +235,7 @@ class match(object):
 
         # Plot
         if plot:
-            # TODO: MAYBE WHEN THE OTHER TEAM RECOVERS THE BALL, THE PITCH INVERTS SO THAT THIS PLOT IS HALF INVERTED
+            # TODO: MAYBE HWHEN THE OTHER TEAM RECOVERS THE BALL, THE PITCH INVERTS SO THAT THIS PLOT IS HALF INVERTED
             field = plt.imread('img/field2.png')
             fig, ax = plt.subplots()
             ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
@@ -325,7 +277,6 @@ class match(object):
                                 shot_end[0], shot_end[1], s=50, c='red', marker='x', edgecolor='black')
             plt.xlim(0, 120)
             plt.ylim(0, 80)
-            plt.gca().invert_yaxis()
             return fig
         else:
             return play_data
@@ -339,72 +290,13 @@ class match(object):
         field = plt.imread('img/field2.png')
         ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
         kdeplot = kdeplot(
-            touches.lat, touches.lon, cmap='Reds', shade=True, alpha=.5)
+            touches.lat, 80-touches.lon, cmap='Reds', shade=True, alpha=.5)
         plt.xlim(0, 120)
         plt.ylim(0, 80)
         kdeplot.collections[0].set_alpha(0)
         ax.get_yaxis().set_visible(False)
         ax.get_xaxis().set_visible(False)
         plt.title(self.name + ' (Heatmap)')
-        plt.gca().invert_yaxis()
-        return fig
-
-    def shot_plot(self, shot_id):
-        import matplotlib.pyplot as plt
-        import matplotlib.patches as patches
-
-        def shot_arrow(loc0, loc1):
-            style = patches.ArrowStyle('-|>', head_length=2, head_width=2)
-            connection = patches.ConnectionStyle("Arc3", rad=0)
-            arrow = patches.FancyArrowPatch(tuple(loc0), tuple(
-                loc1), arrowstyle=style, connectionstyle=connection, linestyle='-', color='red', linewidth=2)
-            return arrow
-
-        shot_idx = np.where(self.data.id == shot_id)
-        x = self.data.iloc[shot_idx]
-        shot = x.shot
-        shot_freeze = shot['freeze_frame']
-
-        player_loc = x['location']
-        shot_end = shot['end_location'][:2]
-        field = plt.imread('img/field2.png')
-        fig, ax = plt.subplots()
-        ax.imshow(field, zorder=0, extent=[0, 120, 0, 80])
-
-        for player in shot_freeze:
-            loc = player['location']
-            if player['teammate']:
-                color = 'blue'
-            else:
-                if player['position']['name'] == 'Goalkeeper':
-                    color = 'yellow'
-                else:
-                    color = 'white'
-            plt.scatter(loc[0], loc[1], c=color, s=200, edgecolor='black')
-
-        outcome = shot['outcome']['name']
-        if outcome in ['Blocked', 'Wayward', 'Off T', 'Post']:
-            marker = 'X'
-            color = 'red'
-        elif outcome in ['Saved', 'Saved Off T', 'Saved To Post']:
-            marker = 'X'
-            color = 'yellow'
-        elif outcome == 'Goal':
-            marker = '*'
-            color = 'yellow'
-
-        arrow = shot_arrow(player_loc, shot_end)
-        plt.gca().add_patch(arrow)
-        plt.scatter(shot_end[0], shot_end[1], marker=marker,
-                    color=color, s=200, edgecolor='black')
-
-        plt.scatter(player_loc[0], player_loc[1],
-                    c='blue', s=200, edgecolor='black')
-
-        ax.get_yaxis().set_visible(False)
-        ax.get_xaxis().set_visible(False)
-        plt.xlim(60, 120)
-        plt.gca().invert_yaxis()
         return fig
 
 
@@ -445,7 +337,7 @@ class player_match(match):
         fig, ax = plt.subplots()
         field = plt.imread('img/field2.png')
         ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
-        kdeplot = kdeplot(touches.lat, touches.lon,
+        kdeplot = kdeplot(touches.lat, 80-touches.lon,
                           cmap='Reds', shade=True, alpha=.5)
         plt.xlim(0, 120)
         plt.ylim(0, 80)
@@ -453,7 +345,6 @@ class player_match(match):
         ax.get_yaxis().set_visible(False)
         ax.get_xaxis().set_visible(False)
         plt.title(self.name + ' (Heatmap)')
-        plt.gca().invert_yaxis()
         return fig
 
     def summary():
