@@ -16,7 +16,6 @@ def load_match(match_id, path='data/'):
     match_lineup = pd.read_json(lineup_path)
     return(match(match_data, match_lineup))
 
-
 class match(object):
     # TODO: Adjust code to new lineup
     # ? Setup the active tactics variable
@@ -27,12 +26,11 @@ class match(object):
         self.data = pd.DataFrame(data)
         self.lineups = lineups
         self.teams = list(lineups['team_name'])
-        self.players = pd.unique([x['name']
-                                  for x in self.data.player.dropna()])
+        self.players = pd.unique([x['name'] for x in self.data.player.dropna()])
         self.name = ' x '.join(self.teams)
         time_data = self.data[['minute', 'second']]
         time_tup = [(t[1].minute, t[1].second) for t in time_data.iterrows()]
-        self.active_time = [min(time_tup), max(time_tup)]
+        self.active_time = [min(time_tup), max(time_tup)]                
 
     def window(self, start, end=(100, 0)):
         """Time Subset of a Match
@@ -83,7 +81,7 @@ class match(object):
 
         Args:
             team_name (str): The team to be selected
-
+            
         Returns:
             match: A match with only the events related to the given team
         """
@@ -115,6 +113,7 @@ class match(object):
 
         Returns:
             plot: The average position figure
+            DataFrame: The average coordinate for each player
         """
         field = plt.imread('img/field2.png')
         for i in range(len(self.teams)):
@@ -235,7 +234,7 @@ class match(object):
         return pd.DataFrame(summary_tbl)
 
     def pass_network(self):
-        """Calculates the matrix of os passes between each pair of players
+        """Calculate the matrix of os passes between each pair of players
         """
         for team in mself.teams:
             my_team = self.team_match(team)
@@ -286,6 +285,7 @@ class match(object):
 
         Returns:
             plot: The touchmap plot
+            pandas.DataFrame: A Data Frame with every touch location
         """
         touch_name = ['Ball Received', 'Ball Recovery*', 'Carry', 'Dribble',
                       'Interception', 'Miscontrol', 'Pass', 'Shot']  # ? Foul Won?
@@ -313,15 +313,6 @@ class match(object):
             return pos
 
     def play(self, play_id, plot=True):
-        """Selects all the events on the same possession as given play
-
-        Args:
-            play_id ([type]): The unique play id (one of the rows of self.id)
-            plot (bool, optional): If to plot the figure. If False, a pandas.DataFrame is returned with the play data. Defaults to True.
-
-        Returns:
-            plot: The figure with every touch on that play and its given path
-        """
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
 
@@ -403,11 +394,6 @@ class match(object):
             return play_data
 
     def heatmap(self):
-        """Calculates the heatmap for every ball touch in this match
-
-        Returns:
-            plot: A figure with the heatmap
-        """
         import matplotlib.pyplot as plt
         from seaborn import kdeplot
 
@@ -427,14 +413,6 @@ class match(object):
         return fig
 
     def shot_plot(self, shot_id):
-        """Creates the image with the shot play for a given shot
-
-        Args:
-            shot_id (str): A play id given that it is a shot, i.e, its type name is 'Shot'
-
-        Returns:
-            plot: A figure with the shot play
-        """
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
 
@@ -494,12 +472,6 @@ class match(object):
 
 
 class player_match(match):
-    """A player match class
-
-    Args:
-        match (match): The match the player was involved
-    """
-
     def __init__(self, data):
         match.__init__(self, data)
         self.name = pd.unique([x['name'] for x in self.data.player])[0]
@@ -514,21 +486,38 @@ class player_match(match):
         time_idx = np.where([x >= start and x <= end for x in time_tup])[0]
         return player_match(self.data.iloc[time_idx])
 
+    def position(self):
+        position_data = self.data[['location', 'minute', 'second']].dropna()
+        position_data['duration'] = 1
+        position_data['lat'] = [x[0] for x in position_data.location]
+        position_data['lon'] = [x[1] for x in position_data.location]
+        return position_data[['lat', 'lon', 'duration']]
+
     def average_position(self):
-        """Calculates the players average position
-        """
-        def location(self):
-            location_data = self.data[[
-                'location', 'minute', 'second']].dropna()
-            location_data['duration'] = 1
-            location_data['lat'] = [x[0] for x in location_data.location]
-            location_data['lon'] = [x[1] for x in location_data.location]
-            return location_data[['lat', 'lon', 'duration']]
         position = self.position()
         time_total = position.duration.sum()
         avg_lat = (position.lat*position.duration).sum()/time_total
         avg_lon = (position.lon*position.duration).sum()/time_total
         return (avg_lat, avg_lon)
+
+    def heatmap(self):
+        import matplotlib.pyplot as plt
+        from seaborn import kdeplot
+
+        touches = self.touch_map(plot=False)
+        fig, ax = plt.subplots()
+        field = plt.imread('img/field2.png')
+        ax.imshow(field, zorder=0, extent=[0, 120, 80, 0])
+        kdeplot = kdeplot(touches.lat, touches.lon,
+                          cmap='Reds', shade=True, alpha=.5)
+        plt.xlim(0, 120)
+        plt.ylim(0, 80)
+        kdeplot.collections[0].set_alpha(0)
+        ax.get_yaxis().set_visible(False)
+        ax.get_xaxis().set_visible(False)
+        plt.title(self.name + ' (Heatmap)')
+        plt.gca().invert_yaxis()
+        return fig
 
     def summary():
         summary_tbl = {team: {} for team in self.teams}

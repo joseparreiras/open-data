@@ -515,8 +515,6 @@ class player_match(match):
         return player_match(self.data.iloc[time_idx])
 
     def average_position(self):
-        """Calculates the players average position
-        """
         def location(self):
             location_data = self.data[[
                 'location', 'minute', 'second']].dropna()
