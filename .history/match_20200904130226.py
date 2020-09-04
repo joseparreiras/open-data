@@ -105,7 +105,7 @@ class match(object):
             not x for x in pd.isnull(self.data.player)]]
         player_idx = np.where(
             [x['name'] == player_name for x in not_null_player.player])[0]
-        return player_match(not_null_player.iloc[player_idx], self.lineups)
+        return player_match(not_null_player.iloc[player_idx])
 
     def position_map(self, starting=True, plot=True):
         """Calculates the average position map of the players in the match
@@ -501,8 +501,8 @@ class player_match(match):
         match (match): The match the player was involved
     """
 
-    def __init__(self, data, lineups):
-        match.__init__(self, data, lineups)
+    def __init__(self, data):
+        match.__init__(self, data)
         self.name = pd.unique([x['name'] for x in self.data.player])[0]
 
     def window(self, start, end=(100, 0)):
@@ -513,20 +513,20 @@ class player_match(match):
         time_data = self.data[['minute', 'second']]
         time_tup = [(t[1].minute, t[1].second) for t in time_data.iterrows()]
         time_idx = np.where([x >= start and x <= end for x in time_tup])[0]
-        return player_match(self.data.iloc[time_idx], self.lineups)
+        return player_match(self.data.iloc[time_idx])
 
     def average_position(self):
         """Calculates the players average position
         """
 
-        def location(data):
-            location_data = data[[
+        def location(self):
+            location_data = self.data[[
                 'location', 'minute', 'second']].dropna()
             location_data['duration'] = 1
             location_data['lat'] = [x[0] for x in location_data.location]
             location_data['lon'] = [x[1] for x in location_data.location]
             return location_data[['lat', 'lon', 'duration']]
-        position = location(self.data)
+        position = self.position()
         time_total = position.duration.sum()
         avg_lat = (position.lat*position.duration).sum()/time_total
         avg_lon = (position.lon*position.duration).sum()/time_total

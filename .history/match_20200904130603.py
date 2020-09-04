@@ -519,14 +519,14 @@ class player_match(match):
         """Calculates the players average position
         """
 
-        def location(data):
-            location_data = data[[
+        def location(self):
+            location_data = self.data[[
                 'location', 'minute', 'second']].dropna()
             location_data['duration'] = 1
             location_data['lat'] = [x[0] for x in location_data.location]
             location_data['lon'] = [x[1] for x in location_data.location]
             return location_data[['lat', 'lon', 'duration']]
-        position = location(self.data)
+        position = location()
         time_total = position.duration.sum()
         avg_lat = (position.lat*position.duration).sum()/time_total
         avg_lon = (position.lon*position.duration).sum()/time_total
