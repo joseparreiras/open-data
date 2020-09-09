@@ -43,3 +43,15 @@ print(len(block_counterpass))
 
 # Tactics and Active Tactics
 self = my_match
+
+active_tactic = None
+
+if active_tactics == None:
+    active_tactics = {}
+    for team in self.teams:
+        team_data = self.data.iloc[[x['name'] == team for x in self.data.team]]
+        starting_idx = np.where(
+            [x.minute == starting[0] and x.second == starting[1] for i, x in team_data.iterrows()])
+        starting_tactics = team_data.tactics.iloc[starting_idx].dropna()
+        if len(starting_tactics) > 0:
+            active_tactics.update({team: starting_tactics})

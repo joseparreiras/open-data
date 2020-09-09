@@ -1,5 +1,6 @@
 import matplotlib.patches as patches
 from match import *
+from player_match import *
 
 match_id = 15946
 my_match = load_match(match_id)
@@ -43,3 +44,5 @@ print(len(block_counterpass))
 
 # Tactics and Active Tactics
 self = my_match
+
+active_tactic = None

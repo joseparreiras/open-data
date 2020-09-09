@@ -247,61 +247,6 @@ class match(object):
             }
 
             summary_tbl[team].update(foul_summary)
-            
-                        #Blocks
-            block_deflection = [x for x in team_match.block.dropna() if 'deflection' in x.keys()]
-            block_offensive = [x for x in team_match.block.dropna() if 'offensive' in x.keys()]
-            block_save = [x for x in team_match.block.dropna() if 'save_block' in x.keys()]
-            block_counterpass = [x for x in team_match.block.dropna() if 'counterpass' in x.keys()]
-            
-            blocks = block_deflection+block_offensive+block_save+block_counterpass
-
-            block_summary = {
-                'total': len(blocks),
-                'deflection': len(block_deflection),
-                'offensive': len(block_offensive),
-                'save': len(block_save),
-                'counterpass': len(block_counterpass),
-            }
-            
-            summary_tbl[team].update(block_summary)
-            
-            #Interception (no divisions)
-            interception_valid = [x for x in team_match.interception.dropna() if 'outcome' 
-            in x.keys() and x['outcome']['name'] in ['Lost Out', 'Success', 'Success In Play', 'Success Out', 'Won']]
-            #interception = team_match.interception.dropna()
-            interception_summary = {
-                'total': len(interception_valid),
-            }
-            summary_tbl[team].update(interception_summary)
-            
-            #Clearance
-            clearance_idx = np.where(
-                                    [x['name'] == 'Clearance' for x in team_match.type])
-            clearance = team_match.iloc[clearance_idx]
-            clearance_summary = {
-                    'total': len(clearance)
-                    }
-            summary_tbl[team].update(clearance_summary)
-            
-            #Clearance
-            clearance_idx = np.where(
-                [x['name'] == 'Clearance' for x in team_match.type])
-
-            clearance = team_match.iloc[clearance_idx]
-            clearance_summary = {
-                'total': len(clearance),
-            }
-            summary_tbl[team].update(clearance_summary)
-
-            #Duels
-            duels = team_match.duel.dropna()
-            duels_valid = [x['outcome'] for x in duels if 'outcome' in x.keys() and 
-               x['outcome']['name'] in ['Lost Out', 'Success In Play', 'Won']]
-            duels_summary = {
-                    'total': len(duels_valid)
-                    }
-            summary_tbl[team].update(duels_summary)
 
         return pd.DataFrame(summary_tbl)
 
